@@ -13,7 +13,6 @@ base {
     archivesName = mod_id
 }
 
-
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
@@ -27,7 +26,6 @@ minecraft {
             workingDirectory project.file('run')
 
             property 'forge.logging.markers', 'REGISTRIES'
-
             property 'forge.logging.console.level', 'debug'
 
             mods {
@@ -69,23 +67,29 @@ repositories {
     maven { url = 'https://maven.minecraftforge.net/' }
 }
 
-jarJar.enable()
+configurations {
+    // Create a common configuration for both compile and runtime
+    implementation.extendsFrom common
+    runtimeOnly.extendsFrom common
+}
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    implementation "me.shedaniel.cloth:cloth-config-forge:11.1.106"
+    // Cloth Config for 1.19.2
+    implementation "me.shedaniel.cloth:cloth-config-forge:7.0.72"
 
-    minecraftLibrary jarJar('com.seedfinding:mc_math:[1.171.0]')
-    minecraftLibrary jarJar('com.seedfinding:mc_seed:[1.171.2]')
-    minecraftLibrary jarJar('com.seedfinding:mc_core:[1.200.0]')
-    minecraftLibrary jarJar('com.seedfinding:mc_noise:[1.171.1]')
-    minecraftLibrary jarJar('com.seedfinding:mc_biome:[1.171.1]')
-    minecraftLibrary jarJar('com.seedfinding:mc_terrain:[1.171.1]')
-    minecraftLibrary jarJar('com.seedfinding:mc_feature:[1.171.7]')
-    minecraftLibrary jarJar('com.seedfinding:mc_reversal:[1.171.1]')
-    minecraftLibrary jarJar('com.seedfinding:latticg:[1.06]')
+    // SeedFinding libraries - using common configuration to ensure they're included
+    common "com.seedfinding:mc_math:1.171.0"
+    common "com.seedfinding:mc_seed:1.171.2"
+    common "com.seedfinding:mc_core:1.200.0"
+    common "com.seedfinding:mc_noise:1.171.1"
+    common "com.seedfinding:mc_biome:1.171.1"
+    common "com.seedfinding:mc_terrain:1.171.1"
+    common "com.seedfinding:mc_feature:1.171.7"
+    common "com.seedfinding:mc_reversal:1.171.1"
+    common "com.seedfinding:latticg:1.06"
 }
 
 tasks.named('processResources', ProcessResources).configure {
@@ -104,6 +108,9 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 jar {
+    // Set duplicates strategy to handle duplicate files
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,
@@ -116,14 +123,24 @@ jar {
         ])
     }
 
+    // Include all dependencies in the jar
+    from {
+        configurations.common.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 
+    // Exclude META-INF files from dependencies that might cause conflicts
+    exclude 'META-INF/MANIFEST.MF'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'META-INF/LICENSE*'
+    exclude 'META-INF/NOTICE*'
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/versions/9/module-info.class'
+    exclude 'META-INF/versions/**/module-info.class'
 }
 
 jar.finalizedBy 'reobfJar'
-tasks.jarJar.finalizedBy('reobfJarJar')
-reobf {
-    jarJar {}
-}
 
 publishing {
     publications {
@@ -145,4 +162,3 @@ tasks.withType(JavaCompile).configureEach {
 mixin {
     config 'seedcracker.mixins.json'
 }
-

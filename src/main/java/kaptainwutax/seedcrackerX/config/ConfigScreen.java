@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-
 public class ConfigScreen {
 
     private static final Config config = Config.get();
@@ -58,11 +57,11 @@ public class ConfigScreen {
                 .setSaveConsumer(val -> config.databaseSubmits = val).build());
         settings.addEntry(eb.startBooleanToggle(Component.translatable("settings.hideNameDatabase"), config.anonymusSubmits).setSaveConsumer(val -> config.anonymusSubmits = val).build());
         settings.addEntry(eb.startTextDescription(Component.translatable("settings.openDatabase").withStyle(s -> s
-                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, DatabaseCommand.databaseURL))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("google sheet")))
-                .withColor(ChatFormatting.BLUE)
-                .withUnderlined(true)
-                .withItalic(true)))
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, DatabaseCommand.databaseURL))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("google sheet")))
+                        .withColor(ChatFormatting.BLUE)
+                        .withUnderlined(true)
+                        .withItalic(true)))
                 .build());
         settings.addEntry(eb.startDropdownMenu(Component.translatable("settings.version"), DropdownMenuBuilder.TopCellElementBuilder.of(config.getVersion(), this::mcVersionFromString))
                 .setSelections(getSupportedVersions())
@@ -143,6 +142,5 @@ public class ConfigScreen {
         builder.setSavingRunnable(Config::save);
 
         return builder.build();
-
     }
 }

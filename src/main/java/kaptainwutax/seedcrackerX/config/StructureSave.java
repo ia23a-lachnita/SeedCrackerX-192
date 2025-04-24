@@ -17,6 +17,7 @@ import java.util.Scanner;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.Connection;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.slf4j.Logger;
@@ -40,9 +41,9 @@ public class StructureSave {
                 for (DataStorage.Entry<Feature.Data<?>> dataEntry : baseData) {
                     if (dataEntry.data.feature instanceof Structure structure) {
                         String data = Structure.getName(structure.getClass()) +
-                            ";" + dataEntry.data.chunkX +
-                            ";" + dataEntry.data.chunkZ +
-                            "\n";
+                                ";" + dataEntry.data.chunkX +
+                                ";" + dataEntry.data.chunkZ +
+                                "\n";
                         writer.write(data);
                     }
                 }
@@ -58,8 +59,8 @@ public class StructureSave {
             Files.createDirectories(saveDir);
             Path saveFile = saveDir.resolve(getWorldName());
             try (
-                FileInputStream fis = new FileInputStream(saveFile.toFile());
-                Scanner sc = new Scanner(fis)
+                    FileInputStream fis = new FileInputStream(saveFile.toFile());
+                    Scanner sc = new Scanner(fis)
             ) {
                 while (sc.hasNextLine()) {
                     String line = sc.nextLine();

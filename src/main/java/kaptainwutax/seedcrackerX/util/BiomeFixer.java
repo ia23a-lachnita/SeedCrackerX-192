@@ -4,8 +4,7 @@ import com.seedfinding.mcbiome.biome.Biome;
 import com.seedfinding.mcbiome.biome.Biomes;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
@@ -50,7 +49,11 @@ public class BiomeFixer {
         ClientPacketListener networkHandler = Minecraft.getInstance().getConnection();
         if (networkHandler == null) return Biomes.VOID;
 
-        ResourceLocation biomeID = networkHandler.registryAccess().registryOrThrow(Registries.BIOME).getKey(biome);
+        // Get biome ID for 1.19.2
+        ResourceLocation biomeID = networkHandler.registryAccess()
+                .registry(Registry.BIOME_REGISTRY)
+                .map(registry -> registry.getKey(biome))
+                .orElse(null);
 
         if (biomeID == null) return Biomes.THE_VOID;
 
@@ -58,11 +61,15 @@ public class BiomeFixer {
     }
 
     public static net.minecraft.world.level.biome.Biome swap(Biome biome) {
-        // internal, meh
-        var biomeRegistries = VanillaRegistries.createLookup().lookupOrThrow(Registries.BIOME);
+        // Updated for 1.19.2 registry access
+        ResourceLocation location = new ResourceLocation("minecraft", biome.getName());
+        ResourceKey<net.minecraft.world.level.biome.Biome> biomeKey =
+                ResourceKey.create(Registry.BIOME_REGISTRY, location);
 
-        return biomeRegistries.get(ResourceKey.create(Registries.BIOME, new ResourceLocation(biome.getName()))).orElse(
-                biomeRegistries.getOrThrow(net.minecraft.world.level.biome.Biomes.THE_VOID)
-        ).value();
+        return Minecraft.getInstance().level != null ?
+                Minecraft.getInstance().level.registryAccess()
+                        .registry(Registry.BIOME_REGISTRY)
+                        .map(registry -> registry.get(biomeKey))
+                        .orElse(null) : null;
     }
 }

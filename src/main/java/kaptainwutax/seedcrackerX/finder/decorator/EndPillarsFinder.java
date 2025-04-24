@@ -38,7 +38,8 @@ public class EndPillarsFinder extends Finder {
                 x = Math.round(x);
                 z = Math.round(z);
             }
-            this.bedrockMarkers[i] = new BedrockMarkerFinder(this.world, new ChunkPos(BlockPos.containing(x, 0, z)), BlockPos.containing(x, 0, z));
+            BlockPos pillarPos = new BlockPos((int)x, 0, (int)z);
+            this.bedrockMarkers[i] = new BedrockMarkerFinder(this.world, new ChunkPos(pillarPos), pillarPos);
         }
     }
 
@@ -63,7 +64,6 @@ public class EndPillarsFinder extends Finder {
             if (SeedCracker.get().getDataStorage().addPillarData(pillarData, DataAddedEvent.POKE_PILLARS)) {
                 result.forEach(pos -> this.renderers.add(new Cube(pos, new Color(128, 0, 128))));
             }
-
         }
 
         return result;
@@ -99,7 +99,5 @@ public class EndPillarsFinder extends Finder {
         public boolean isValidDimension(DimensionType dimension) {
             return true;
         }
-
     }
-
 }

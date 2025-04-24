@@ -17,7 +17,7 @@ license="${mod_license}"
 # The modid of the mod
 modId="seedcracker" #mandatory
 # The version number of the mod
-version="2.14.4.1" #mandatory
+version="2.14.4.1-1.19.2" #mandatory
 # A display name for the mod
 displayName="SeedCrackerX" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification https://docs.minecraftforge.net/en/latest/misc/updatechecker/
@@ -42,30 +42,30 @@ authors="thePlaceholder, 19MisterX98" #optional
 description='''a port of 19MisterX98's SeedcrackerX for forge'''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.seedcracker]] #optional
-    # the modid of the dependency
-    modId="forge" #mandatory
-    # Does this dependency have to exist - if not, ordering below must be specified
-    mandatory=true #mandatory
-    # The version range of the dependency
-    versionRange="[47,)" #mandatory
-    # An ordering relationship for the dependency - BEFORE or AFTER required if the dependency is not mandatory
-    # BEFORE - This mod is loaded BEFORE the dependency
-    # AFTER - This mod is loaded AFTER the dependency
-    ordering="NONE"
-    # Side this dependency is applied on - BOTH, CLIENT, or SERVER
-    side="CLIENT"
+# the modid of the dependency
+modId="forge" #mandatory
+# Does this dependency have to exist - if not, ordering below must be specified
+mandatory=true #mandatory
+# The version range of the dependency
+versionRange="[43,)" #mandatory
+# An ordering relationship for the dependency - BEFORE or AFTER required if the dependency is not mandatory
+# BEFORE - This mod is loaded BEFORE the dependency
+# AFTER - This mod is loaded AFTER the dependency
+ordering="NONE"
+# Side this dependency is applied on - BOTH, CLIENT, or SERVER
+side="CLIENT"
 # Here's another dependency
 [[dependencies.seedcracker]]
-    modId="minecraft"
-    mandatory=true
-    # This version range declares a minimum of the current minecraft version up to but not including the next major version
-    versionRange="[1.20.1,1.21)"
-    ordering="NONE"
-    side="CLIENT"
+modId="minecraft"
+mandatory=true
+# This version range declares a minimum of the current minecraft version up to but not including the next major version
+versionRange="[1.19.2,1.20)"
+ordering="NONE"
+side="CLIENT"
 
 [[dependencies.seedcracker]]
-    modId="cloth_config"
-    mandatory=true
-    versionRange="[4.11.37,)"
-    ordering="BEFORE"
-    side="CLIENT"
+modId="cloth_config"
+mandatory=true
+versionRange="[7.0.72,)"
+ordering="BEFORE"
+side="CLIENT"

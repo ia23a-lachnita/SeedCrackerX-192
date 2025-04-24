@@ -50,7 +50,7 @@ public class Line extends Renderer {
         double x = (this.end.x() - this.start.x()) / 2 + this.start.x();
         double y = (this.end.y() - this.start.y()) / 2 + this.start.y();
         double z = (this.end.z() - this.start.z()) / 2 + this.start.z();
-        return BlockPos.containing(x, y, z);
+        return new BlockPos((int)x, (int)y, (int)z);
     }
 
 }
