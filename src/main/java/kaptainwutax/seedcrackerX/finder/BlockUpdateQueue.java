@@ -27,6 +27,15 @@ public class BlockUpdateQueue {
     public void tick() {
         if (blocksAndAction.isEmpty()) return;
 
+        // Add check to ensure we're not on a vanilla server
+        if (Minecraft.getInstance().getConnection() == null) {
+            blocksAndAction.clear();
+            return;
+        }
+
+        // Only send packets if we're on a compatible server/singleplayer
+        if (Minecraft.getInstance().getConnection().getConnection().isMemoryConnection()) {
+
         Tuple<Thread, ArrayList<BlockPos>> current = blocksAndAction.peek();
         ArrayList<BlockPos> currentBlocks = current.getB();
         for (int i = 0; i < 5; i++) {
@@ -47,6 +56,11 @@ public class BlockUpdateQueue {
             ServerboundPlayerActionPacket p = new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, currentBlocks.remove(0),
                     Direction.DOWN);
             Minecraft.getInstance().getConnection().send(p);
+        }
+
+        } else {
+            // Clear the queue if on a remote server
+            blocksAndAction.clear();
         }
     }
 }

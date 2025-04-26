@@ -134,7 +134,7 @@ public class DungeonFinder extends BlockFinder {
 
         int[] floorCalls = this.getFloorCalls(size, pos);
         Dungeon.Data data = Features.DUNGEON.at(pos.getX(), pos.getY(), pos.getZ(), size, floorCalls, BiomeFixer.swap(biome), heightContext);
-        if (AntiXRay(pos) && Config.get().antiXrayBypass) {
+        if (AntiXRay(pos) && Config.get().antiXrayBypass && SeedCracker.get().isServerCompatible()) {
             if (SeedCracker.get().getDataStorage().baseSeedData.contains(new DataStorage.Entry<>(data, null))) {
                 return result;
             }
@@ -163,11 +163,13 @@ public class DungeonFinder extends BlockFinder {
 
             });
             blockUpdateExploit(pos, size, floorCallsUpdater);
-        } else if (SeedCracker.get().getDataStorage().addBaseData(data, data::onDataAdded)) {
-            this.renderers.add(new Cube(pos, new Color(255, 0, 0)));
-
-            if (data.usesFloor()) {
-                this.renderers.add(new Cuboid(pos.subtract(size), pos.offset(size).offset(1, -1, 1), new Color(255, 0, 0)));
+        } else {
+            // Fallback to normal behavior without packet sending
+            if (SeedCracker.get().getDataStorage().addBaseData(data, data::onDataAdded)) {
+                this.renderers.add(new Cube(pos, new Color(255, 0, 0)));
+                if (data.usesFloor()) {
+                    this.renderers.add(new Cuboid(pos.subtract(size), pos.offset(size).offset(1, -1, 1), new Color(255, 0, 0)));
+                }
             }
         }
         return result;

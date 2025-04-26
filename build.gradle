@@ -4,6 +4,7 @@ plugins {
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.spongepowered.mixin' version '0.7.+'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
 }
 
 version = mod_version
@@ -15,42 +16,33 @@ base {
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
-println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
-
     copyIdeResources = true
 
     runs {
         configureEach {
             workingDirectory project.file('run')
-
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
-
             mods {
                 "${mod_id}" {
                     source sourceSets.main
                 }
             }
         }
-
         client {
             property 'forge.enabledGameTestNamespaces', mod_id
         }
-
         server {
             property 'forge.enabledGameTestNamespaces', mod_id
             args '--nogui'
         }
-
         gameTestServer {
             property 'forge.enabledGameTestNamespaces', mod_id
         }
-
         data {
             workingDirectory project.file('run-data')
-
             args '--mod', mod_id, '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
         }
     }
@@ -68,92 +60,101 @@ repositories {
 }
 
 configurations {
-    // Create a common configuration for both compile and runtime
-    implementation.extendsFrom common
-    runtimeOnly.extendsFrom common
+    shade
+    implementation.extendsFrom shade
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    // Cloth Config for 1.19.2
-    implementation "me.shedaniel.cloth:cloth-config-forge:7.0.72"
+    implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:7.0.72")
 
-    // SeedFinding libraries - using common configuration to ensure they're included
-    common "com.seedfinding:mc_math:1.171.0"
-    common "com.seedfinding:mc_seed:1.171.2"
-    common "com.seedfinding:mc_core:1.200.0"
-    common "com.seedfinding:mc_noise:1.171.1"
-    common "com.seedfinding:mc_biome:1.171.1"
-    common "com.seedfinding:mc_terrain:1.171.1"
-    common "com.seedfinding:mc_feature:1.171.7"
-    common "com.seedfinding:mc_reversal:1.171.1"
-    common "com.seedfinding:latticg:1.06"
+    // Shade these dependencies to avoid conflicts
+    shade "com.seedfinding:mc_math:1.171.0"
+    shade "com.seedfinding:mc_seed:1.171.2"
+    shade "com.seedfinding:mc_core:1.200.0"
+    shade "com.seedfinding:mc_noise:1.171.1"
+    shade "com.seedfinding:mc_biome:1.171.1"
+    shade "com.seedfinding:mc_terrain:1.171.1"
+    shade "com.seedfinding:mc_feature:1.171.7"
+    shade "com.seedfinding:mc_reversal:1.171.1"
+    shade "com.seedfinding:latticg:1.06"
 }
 
-tasks.named('processResources', ProcessResources).configure {
-    var replaceProperties = [
-            minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
-            forge_version: forge_version, forge_version_range: forge_version_range,
-            loader_version_range: loader_version_range,
-            mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-            mod_authors: mod_authors, mod_description: mod_description,
-    ]
-    inputs.properties replaceProperties
+shadowJar {
+    configurations = [project.configurations.shade]
+    archiveClassifier.set('all')
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
-        expand replaceProperties + [project: project]
-    }
+    // Relocate packages to avoid conflicts
+    relocate 'com.seedfinding', 'kaptainwutax.seedcrackerX.relocate.seedfinding'
+
+    // Exclude common files that might cause conflicts
+    exclude 'META-INF/maven/**'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'module-info.class'
+
+    minimize()
 }
 
 jar {
-    // Set duplicates strategy to handle duplicate files
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,
                 'Specification-Vendor'    : mod_authors,
-                'Specification-Version'   : '1', // We are version 1 of ourselves
+                'Specification-Version'   : '1',
                 'Implementation-Title'    : project.name,
                 'Implementation-Version'  : project.jar.archiveVersion,
                 'Implementation-Vendor'   : mod_authors,
-                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'Side': 'CLIENT'
         ])
     }
-
-    // Include all dependencies in the jar
-    from {
-        configurations.common.collect { it.isDirectory() ? it : zipTree(it) }
-    }
-
-    // Exclude META-INF files from dependencies that might cause conflicts
-    exclude 'META-INF/MANIFEST.MF'
-    exclude 'META-INF/*.SF'
-    exclude 'META-INF/*.DSA'
-    exclude 'META-INF/*.RSA'
-    exclude 'META-INF/LICENSE*'
-    exclude 'META-INF/NOTICE*'
-    exclude 'META-INF/maven/**'
-    exclude 'META-INF/versions/9/module-info.class'
-    exclude 'META-INF/versions/**/module-info.class'
 }
 
-jar.finalizedBy 'reobfJar'
+reobf {
+    shadowJar {
+        dependsOn createMcpToSrg
+    }
+}
+
+// Configure task dependencies properly
+build {
+    dependsOn shadowJar
+}
+
+shadowJar {
+    dependsOn jar
+}
+
+reobfShadowJar {
+    dependsOn shadowJar
+}
+
+tasks.build.dependsOn reobfShadowJar
 
 publishing {
     publications {
-        register('mavenJava', MavenPublication) {
-            artifact jar
+        mavenJava(MavenPublication) {
+            // point to the jar file produced by the reobfShadowJar task:
+            artifact(
+                    tasks.named('reobfShadowJar').flatMap { it.archiveFile }
+            ) {
+                // optional: remove the "all" classifier if you want it to be the primary artifact
+                classifier = null
+            }
         }
     }
     repositories {
         maven {
-            url "file://${project.projectDir}/mcmodsrepo"
+            // use uri() so Gradle treats this as a file repo
+            url = uri("$projectDir/mcmodsrepo")
         }
     }
 }
+
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
